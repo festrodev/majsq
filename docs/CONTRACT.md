@@ -254,9 +254,12 @@ The agent is the only thing that talks to Festro, and only reads:
   `q`, `tags` (verbatim label, e.g. `Hip Hop`), `price=free`, `market`.
 - `GET /api/v1/tags/`
 - `GET /api/v1/connect/profile/` — with a member's opaque connect credential.
-  **Built and merged-pending on Festro's side** (festro#574). Returns aggregate
-  preference only: weighted tags, organizers and venues, a price band, usual
-  nights, and three counts. No email, no event rows, no reservations.
+  **Built on Festro's side** (festro#574, festro#575). Returns exactly three
+  keys — `display_name`, `taste` (weighted `tags`, `organizers`, `venues`, plus
+  `price_band` and `usual_nights`), and `counts` (`window_days`, `saved`,
+  `reservations`, `following_at_least`). No email, no locale, no event rows, no
+  reservations. The key set is pinned by a test on the Festro side, so treat it
+  as fixed: if you need another field, ask rather than assume one appeared.
   `FESTRO_MOCK=1` still returns a fixture profile so the personalization path
   is demonstrable without credentials.
 

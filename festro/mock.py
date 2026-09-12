@@ -91,11 +91,13 @@ def search_events(
 def profile() -> dict:
     """A stand-in taste profile, so the personalization path is demonstrable.
 
-    Clearly fake on purpose — it is a fixture, not anyone's real history.
+    Clearly fake on purpose — it is a fixture, not anyone's real history. Its
+    key set matches the live endpoint exactly (pinned there by
+    ProfilePayloadTests): a fixture that carries a field the real payload does
+    not is how code gets written against something that never arrives.
     """
     return {
         "display_name": "Demo member",
-        "locale": "fr",
         "taste": {
             "tags": [
                 {"tag": "Electronic", "weight": 9},
@@ -107,6 +109,10 @@ def profile() -> dict:
             "price_band": "under_30",
             "usual_nights": ["friday", "saturday"],
         },
-        "upcoming": [],
-        "counts": {"saved": 12, "reservations": 3},
+        "counts": {
+            "window_days": 365,
+            "saved": 12,
+            "reservations": 3,
+            "following_at_least": 4,
+        },
     }
