@@ -8,26 +8,34 @@ minimum that keeps the sessions from building four different products.
 | Person | Repo | Owns | Never touches |
 |---|---|---|---|
 | **Quan** | `majsq` | The brain, Festro access, the AG-UI stream, `docs/CONTRACT.md` | UI of any kind |
-| **Manh** | `majsqweb` | `/`, `/chat`, CopilotKit wiring, the shared components | Ranking, Festro calls, `src/app/m/**` |
+| **Manh** | `majsqweb` | Every page and every wired component: `/`, `/chat`, `/m/[share_id]`, the proxy routes, CopilotKit | Ranking, Festro calls, Jihoo's design files |
 | **Selene** | `majsqbot` | Telegram behaviour, the login handoff, the real-group test | Ranking, Festro calls |
-| **Jihoo** | `majsqweb` (map) + all three | `/m/[share_id]`, calendar links, and from 14:30 the whole submission | Manh's files: `/`, `/chat`, `src/app/api/**`, the shared components |
+| **Jihoo** | design, across all three | Tokens, the five visual primitives, the screen layouts, the words, and from 14:30 the submission | Manh's pages and logic, the agent, the bot's code |
 | **Ali** | Festro's private repos | The connect grant on festro.com, credentials, deploy | Surface code (unless asked) |
 
-One owner per repo, except `majsqweb`, where two people work on **disjoint
-directories**:
+Manh and Jihoo share `majsqweb`. **Design and code are split by file**, so
+neither ever waits on the other:
 
-| Manh | Jihoo |
+| Jihoo — how it looks | Manh — what it does |
 |---|---|
-| `src/app/page.tsx`, `src/app/chat/**`, `src/app/api/**` | `src/app/m/[share_id]/**` |
-| `src/components/{Chip,PickCard,QuestionBlock,ConsentToggle}.tsx` | `src/components/Map*.tsx` |
-| `src/lib/turn.ts` | `src/lib/share.ts` |
+| `src/app/globals.css` (all tokens) | `src/app/page.tsx`, `chat/**`, `m/**` |
+| `src/app/dev/**` (token + component galleries) | `src/app/api/**` |
+| `src/components/ui/**` (visual primitives) | `src/components/*.tsx` (wired components) |
+| `public/**` (favicon, OG image) | `src/lib/**` |
+| `majsq/docs/DESIGN.md` | |
 
-`PickCard` is Manh's. Jihoo imports it and never edits it; if the map needs a
-change to it, ask in the group chat. Both pull from `main` before every push.
+The handoff is `/dev/components`, not a conversation: Jihoo renders every
+component in every state there, and Manh builds against it. If Manh needs a
+look that does not exist yet, they build the plainest version against the
+tokens and swap it later — nobody blocks on design.
+
+**Nobody writes a hex value in a component.** Tokens only. That single rule is
+what lets two people work on the same screen without it looking like two
+screens.
 
 You push to `main` of **your** repo directly today — there is no time for
 review — except in `majsqweb`, where Manh pushes to `main` and Jihoo opens a
-PR from `feat/map`. You open a PR for anyone else's repo.
+PR from `design/<thing>`. You open a PR for anyone else's repo.
 
 ## The three documents
 
@@ -76,14 +84,14 @@ one shared file is `CONTRACT.md`, and only one person edits it.
 - **Agent:** `/agui/` streams; `OPENAI_API_KEY` set → the headline and the
   reasons are phrased by the model, unset → deterministic text; `pytest`
   passes; `Dockerfile` builds.
-- **Web:** `/` welcome, `/chat` with chips → question → three PickCards, and
-  `/m/[share_id]` with three markers. Both themes. Works with `FESTRO_MOCK=1`.
+- **Manh:** `/` welcome, `/chat` with chips → question → three PickCards, and
+  `/m/[share_id]` with three markers on a phone. Works with `FESTRO_MOCK=1`.
 - **Bot:** In a real Telegram group on a real phone: welcome on add, silent
   until asked, question chips, three picks + poll + map button, consent
   toggle acknowledges. `Dockerfile` builds.
-- **Jihoo:** `/m/[share_id]` renders three numbered markers and three
-  PickCards from a real share id, on a phone, in both themes. Calendar links
-  work. From 14:30: clean-clone check on all three repos, then the video,
+- **Jihoo:** tokens final, the five components rendered in every state at
+  `/dev/components` in both themes at 375px, the three screen layouts handed
+  over, the French strings read out loud and fixed. From 14:30: the video,
   description and social post.
 - **Ali:** `majsq` registered as a third-party application on Festro; the
   connect grant endpoints and the approve page exist; the credential works
@@ -96,7 +104,7 @@ one shared file is `CONTRACT.md`, and only one person edits it.
 | 13:30 | Each repo demo-able on its own with `FESTRO_MOCK=1`. |
 | 14:00 | The three connected: bot → agent → web map link, live on a phone. |
 | 14:30 | **Feature freeze.** Only fixes after this. |
-| 14:30 | Jihoo starts the clean-clone check on all three repos. Any README that fails gets a PR now. |
+| 14:30 | Clean-clone check on all three repos — anyone free. A README that fails gets a PR now, not at 15:25. |
 | 15:00 | Video shot, description written, sponsor post drafted. |
 | 15:45 | **Submit.** Do not wait for 16:00. |
 

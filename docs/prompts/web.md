@@ -2,15 +2,26 @@
 
 # Your part: the web surface (`majsqweb`)
 
-You own `/`, `/chat`, the server-side proxy routes, and the shared components.
-**Jihoo works in this same repo on `/m/[share_id]` and `src/components/Map*.tsx`
-only** — those files are theirs, yours are listed in `TEAM.md`. `PickCard` is
-yours: Jihoo imports it, so tell them when its props change. Pull from `main`
-before every push. The scaffold is Next.js 16 (App Router), React 19,
-Tailwind v4, with `@copilotkit/react-core`, `@copilotkit/react-ui`,
-`@copilotkit/runtime`, `@ag-ui/client` and `maplibre-gl` installed. Nothing
-else exists yet. `DESIGN.md` is your spec; build the five components it names
-once and reuse them.
+You build the whole web app: every page, every wired component, the data flow.
+**Jihoo is the design lead** and works in this same repo on disjoint files —
+`src/app/globals.css` (all tokens), `src/app/dev/**` (the galleries),
+`src/components/ui/**` (visual primitives) and `public/**`. You never edit
+those; they never edit yours. When you need to know what something looks like,
+open `/dev/components` — that page is the handoff, not a conversation.
+
+Already in the repo and working:
+
+- `src/app/globals.css` — the design tokens, exposed to Tailwind. Write
+  `bg-surface text-ink rounded-[var(--radius-card)]`. **Never a hex value.**
+- `src/lib/agent.ts` — a typed server-only client for every contract endpoint
+  (`turn`, `slots`, `categories`, `share`).
+- `src/lib/session.ts` — `getSessionId()`, the httpOnly `majsq_session` cookie.
+- `src/app/api/turn/route.ts` — the browser's only route to the agent.
+- `layout.tsx` with the fonts. `/dev/tokens` to see the palette.
+
+Stack: Next.js 16 App Router, React 19, Tailwind v4, with
+`@copilotkit/react-core`, `@copilotkit/react-ui`, `@copilotkit/runtime`,
+`@ag-ui/client` and `maplibre-gl` installed.
 
 Run the agent first (offline is fine):
 
@@ -23,31 +34,22 @@ cp .env.example .env.local && npm install && npm run dev
 
 ## Build, in this order
 
-### 1. Tokens and the five components
+### 1. The remaining proxy routes
 
-`src/app/globals.css`: the exact CSS variables from `DESIGN.md §3`, dark-first,
-with the light overrides under `[data-theme="light"]` and
-`@media (prefers-color-scheme: light)`. The Google Fonts link from the doc in
-`layout.tsx`. Then `src/components/`: `Chip`, `PickCard`, `QuestionBlock`,
-`MapMarker`, `ConsentToggle`, named exactly that. Show me a Storybook-free
-`/dev/components` page rendering all five in both themes before moving on.
+`api/slots`, `api/categories`, `api/consent`, mirroring the existing
+`api/turn/route.ts`: read the cookie with `getSessionId()`, call `lib/agent.ts`,
+return the JSON. The browser never sees the secret or the agent URL.
 
-### 2. Identity: the `majsq_session` cookie
+### 2. Wire the components
 
-A route handler or middleware sets an httpOnly, `SameSite=Lax`,
-`Secure`-in-prod cookie `majsq_session` = 22 random url-safe chars on first
-visit. Every call to the agent uses that value as both `conversation_id` and
-`participant_id` with `channel: "web", kind: "web"` — from the server, never
-from the browser (`CONTRACT.md §Identity`).
+Jihoo authors the look in `src/components/ui/`. You write the wired versions in
+`src/components/` — `Chip`, `PickCard`, `QuestionBlock`, `MapMarker`,
+`ConsentToggle` — that take contract types from `lib/agent.ts` and render
+Jihoo's primitives. If a primitive is not ready yet, build the plainest
+possible version against the tokens and swap it later; do not block on design
+and do not invent a look of your own.
 
-### 3. Server-side proxy routes
-
-`src/app/api/turn/route.ts`, `api/slots`, `api/categories`, `api/consent`:
-each reads the cookie, adds `X-Majsq-Service-Secret` from `process.env`
-(never `NEXT_PUBLIC_`), forwards to `MAJSQ_AGENT_URL`, returns the JSON. The
-browser never sees the secret or the agent URL.
-
-### 4. `/` — welcome
+### 3. `/` — welcome
 
 "Salut 👋 Je suis **maj$q**." + one line. Primary button `btn.connect`
 (links to `/connect`, which for today is a placeholder page that says the
@@ -56,7 +58,7 @@ connect flow is coming — Ali owns the Festro side). Secondary `btn.guest` →
 tap is the first answer. Locale from `Accept-Language`, `fr` default, a small
 FR/EN switch in the header.
 
-### 5. `/chat` — the conversation
+### 4. `/chat` — the conversation
 
 Drive it through `POST /api/turn/` first (the AG-UI stream returns 501 until
 the agent owner ships it — see `CONTRACT.md`). One `useTurn()` hook wraps the
@@ -72,12 +74,23 @@ sentence end in the same place. Show `nudge.connect` when `suggest_connect`.
 Text input at the bottom, `Enter` sends. Loading text, not a spinner:
 "Je cherche…".
 
-### 6. `/m/[share_id]` — not yours
+### 5. `/m/[share_id]` — the map
 
-Jihoo is building it. Make sure `PickCard` is importable and self-contained
-(no dependency on chat state or the session cookie) so their page can use it.
+This is what a Telegram user taps, so it must work with **no cookie, no login**,
+on a phone. Server component, `share()` from `lib/agent.ts`. MapLibre with
+OpenStreetMap raster tiles and **no API key** (a fork has to run it). Three
+numbered markers, fit bounds with 48px padding, popover shows the `PickCard`.
+Under the map, the same three `PickCard`s for anyone who cannot use a map —
+that is also what renders if MapLibre fails to load. Some events have `null`
+coordinates: keep them in the list below with a "lieu à confirmer" note rather
+than dropping them, and fit bounds to the ones that do have coordinates.
 
-### 7. CopilotKit, once the stream exists
+Each card gets `btn.calendar` — a Google Calendar template URL from `title`,
+`start_datetime`, `end_datetime`, `venue_name`, `url`. No OAuth. When
+`start_time_known` is false, make it an all-day event rather than inventing
+an hour.
+
+### 6. CopilotKit, once the stream exists
 
 `src/app/api/copilotkit/[[...slug]]/route.ts` with `CopilotRuntime`, the
 agent registered as `HttpAgent({ url: MAJSQ_AGENT_URL + "/agui/", headers: {"X-Majsq-Service-Secret": …} })`
@@ -91,7 +104,7 @@ building on it; tell me what you find. If Ali gives you a Copilot Cloud
 `publicApiKey`, it goes in `NEXT_PUBLIC_COPILOT_CLOUD_PUBLIC_API_KEY` and the
 self-hosted route stays as the fallback.
 
-### 8. Both themes, mobile first
+### 7. Both themes, mobile first
 
 Check every page at 375px and in both themes. Text contrast ≥ 4.5:1. Focus
 rings visible.
@@ -100,4 +113,7 @@ rings visible.
 
 - No event images, no `<img>` of anything from Festro. Ever.
 - No second accent color. No modals. No chip list of your own.
+- No hex values or arbitrary colors in a component. Tokens only.
+- Do not edit `globals.css`, `src/app/dev/**`, `src/components/ui/**` or
+  `public/**` — those are Jihoo's. Ask in the group chat instead.
 - Nothing that calls `api.festro.com` from this repo.
