@@ -193,9 +193,8 @@ only. The web's `/m/[share_id]` page calls this directly.
 
 ## `POST /agui/` — AG-UI stream for CopilotKit
 
-Status: **returns 501 until the agent owner ships it.** The web can drive
-the agent through `/api/turn/` meanwhile and should be built so that swapping
-in the stream is a change in one file.
+Status: **implemented.** The web can register this URL as a remote AG-UI agent
+and consume the same conversation engine and state shape as `/api/turn/`.
 
 When it lands it will accept AG-UI `RunAgentInput` and stream SSE events
 (`RUN_STARTED`, `TEXT_MESSAGE_*`, `TOOL_CALL_*`, `STATE_SNAPSHOT`,
