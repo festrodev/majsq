@@ -7,9 +7,9 @@ share the same rules; the rest is that person's work, in order.
 
 | File | Person | Repo |
 |---|---|---|
-| [`agent.md`](agent.md) | Quan | `majsq` |
+| [`agent.md`](agent.md) | Selene | `majsq` |
 | [`web.md`](web.md) | Manh | `majsqweb` — every page and wired component |
-| [`bot.md`](bot.md) | Selene | `majsqbot` |
+| [`bot.md`](bot.md) | Quan | `majsqbot` |
 | [`design.md`](design.md) | Jihoo | design across all three, then the submission |
 | [`festro-connect.md`](festro-connect.md) | Ali | Festro's private repos |
 

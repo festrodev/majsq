@@ -7,9 +7,9 @@ minimum that keeps the sessions from building four different products.
 
 | Person | Repo | Owns | Never touches |
 |---|---|---|---|
-| **Quan** | `majsq` | The brain, Festro access, the AG-UI stream, `docs/CONTRACT.md` | UI of any kind |
+| **Selene** | `majsq` | The brain, Festro access, the AG-UI stream, `docs/CONTRACT.md` | UI of any kind |
 | **Manh** | `majsqweb` | Every page and every wired component: `/`, `/chat`, `/m/[share_id]`, the proxy routes, CopilotKit | Ranking, Festro calls, Jihoo's design files |
-| **Selene** | `majsqbot` | Telegram behaviour, the login handoff, the real-group test | Ranking, Festro calls |
+| **Quan** | `majsqbot` | Telegram behaviour, the login handoff, the real-group test | Ranking, Festro calls |
 | **Jihoo** | design, across all three | Tokens, the five visual primitives, the screen layouts, the words, and from 14:30 the submission | Manh's pages and logic, the agent, the bot's code |
 | **Ali** | Festro's private repos | The connect grant on festro.com, credentials, deploy | Surface code (unless asked) |
 
@@ -81,12 +81,12 @@ one shared file is `CONTRACT.md`, and only one person edits it.
 
 ## Definition of done, per repo, by 14:30
 
-- **Agent:** `/agui/` streams; `OPENAI_API_KEY` set → the headline and the
+- **Selene (agent):** `/agui/` streams; `OPENAI_API_KEY` set → the headline and the
   reasons are phrased by the model, unset → deterministic text; `pytest`
   passes; `Dockerfile` builds.
 - **Manh:** `/` welcome, `/chat` with chips → question → three PickCards, and
   `/m/[share_id]` with three markers on a phone. Works with `FESTRO_MOCK=1`.
-- **Bot:** In a real Telegram group on a real phone: welcome on add, silent
+- **Quan (bot):** In a real Telegram group on a real phone: welcome on add, silent
   until asked, question chips, three picks + poll + map button, consent
   toggle acknowledges. `Dockerfile` builds.
 - **Jihoo:** tokens final, the five components rendered in every state at
