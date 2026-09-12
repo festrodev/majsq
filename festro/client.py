@@ -7,6 +7,11 @@ Three endpoints, all read-only:
 * ``GET /api/v1/connect/profile/`` — one member's minimized taste profile,
   with their opaque connect credential
 
+The connect handoff also makes one write-like exchange call:
+
+* ``POST /api/v1/connect/token/``  — consume a short-lived authorization code
+  and receive the profile-only credential
+
 Rules that live here because they are easy to break elsewhere:
 
 * Every request carries a ``User-Agent`` that names this project, so a noisy
@@ -37,6 +42,18 @@ _CACHE: dict[str, tuple[float, Any]] = {}
 
 class FestroError(RuntimeError):
     """A call to Festro failed. Callers degrade, they do not crash."""
+
+    def __init__(
+        self,
+        detail: str,
+        *,
+        code: str = "festro_unavailable",
+        status_code: int = 502,
+    ) -> None:
+        super().__init__(detail)
+        self.code = code
+        self.detail = detail
+        self.status_code = status_code
 
 
 def _headers() -> dict[str, str]:
@@ -82,6 +99,42 @@ def _get(path: str, *, params: dict | None = None, headers: dict | None = None) 
         return response.json()
     except json.JSONDecodeError as exc:
         raise FestroError(f"GET {path} returned non-JSON") from exc
+
+
+def exchange_connect_code(*, code: str, code_verifier: str, redirect_uri: str) -> dict:
+    """Exchange a one-time connect grant for a profile-only credential."""
+    if not settings.FESTRO_CLIENT_ID or not settings.FESTRO_CLIENT_SECRET:
+        raise FestroError("Festro client credentials are not configured")
+
+    path = "/api/v1/connect/token/"
+    try:
+        response = requests.post(
+            f"{settings.FESTRO_API_BASE}{path}",
+            json={
+                "code": code,
+                "code_verifier": code_verifier,
+                "redirect_uri": redirect_uri,
+            },
+            headers=_headers(),
+            timeout=settings.FESTRO_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        raise FestroError(f"POST {path} failed: {exc}") from exc
+    if response.status_code >= 400:
+        try:
+            error = response.json()
+        except (json.JSONDecodeError, ValueError):
+            error = {}
+        code = str(error.get("code") or "festro_exchange_failed")
+        detail = str(error.get("detail") or f"POST {path} returned {response.status_code}")
+        raise FestroError(detail, code=code, status_code=response.status_code)
+    try:
+        payload = response.json()
+    except json.JSONDecodeError as exc:
+        raise FestroError(f"POST {path} returned non-JSON") from exc
+    if not isinstance(payload, dict) or not payload.get("connect_token"):
+        raise FestroError(f"POST {path} returned no connect_token")
+    return payload
 
 
 # --------------------------------------------------------------- catalog ----

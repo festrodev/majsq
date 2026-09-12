@@ -10,6 +10,9 @@ urlpatterns = [
     path("categories/", views.category_chips, name="categories"),
     # Per-group taste consent, toggled from a surface's own button.
     path("consent/", views.consent, name="consent"),
+    # Exchange a short-lived Festro code and attach the resulting profile-only
+    # credential to the transport-verified participant.
+    path("link/", views.link, name="link"),
     # The public map share payload. No service secret: an unguessable share id
     # is the credential, and the payload is public event fields only.
     path("shares/<str:share_id>/", views.share, name="share"),
