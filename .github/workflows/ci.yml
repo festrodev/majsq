@@ -53,7 +53,17 @@ jobs:
         run: python manage.py check
 
       - name: Tests
-        run: python manage.py test
+        # There are no unit tests yet — they are Selene's task 5 in
+        # docs/prompts/agent.md. `manage.py test` exits 0 on an empty suite, so
+        # without this the step would report a confident green over nothing at
+        # all. Print the count and say so until tests exist; the smoke test
+        # below is what actually holds the line meanwhile.
+        run: |
+          out=$(python manage.py test 2>&1)
+          echo "$out"
+          if echo "$out" | grep -q "NO TESTS RAN"; then
+            echo "::warning::No unit tests in this repo yet — the smoke test below is the only functional gate."
+          fi
 
       - name: Smoke — a real conversation end to end
         # The suite can pass while the app is broken at the seams, so drive the

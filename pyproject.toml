@@ -7,6 +7,9 @@ requires-python = ">=3.12"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# Django writes migrations; we do not. Linting generated code means editing it
+# by hand, and a hand-edited migration is a merge conflict waiting to happen.
+extend-exclude = ["*/migrations/*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

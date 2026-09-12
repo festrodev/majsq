@@ -105,9 +105,7 @@ class Membership(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["conversation", "participant"], name="uniq_membership"
-            )
+            models.UniqueConstraint(fields=["conversation", "participant"], name="uniq_membership")
         ]
 
     def set_taste_consent(self, *, enabled: bool) -> None:
@@ -160,9 +158,7 @@ class ConnectState(models.Model):
     participant = models.ForeignKey(
         Participant, on_delete=models.CASCADE, related_name="connect_states"
     )
-    conversation = models.ForeignKey(
-        Conversation, on_delete=models.SET_NULL, null=True, blank=True
-    )
+    conversation = models.ForeignKey(Conversation, on_delete=models.SET_NULL, null=True, blank=True)
     code_verifier = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
     consumed_at = models.DateTimeField(null=True, blank=True)
@@ -179,9 +175,7 @@ class Turn(models.Model):
         AGENT = "agent", "Agent"
         SYSTEM = "system", "System"
 
-    conversation = models.ForeignKey(
-        Conversation, on_delete=models.CASCADE, related_name="turns"
-    )
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="turns")
     participant = models.ForeignKey(
         Participant, on_delete=models.SET_NULL, null=True, blank=True, related_name="turns"
     )

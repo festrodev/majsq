@@ -87,9 +87,7 @@ BAND_LABELS = {
 
 def band_labels(locale: str = "fr") -> list[dict]:
     index = 0 if str(locale).startswith("fr") else 1
-    return [
-        {"key": key, "label": labels[index]} for key, labels in BAND_LABELS.items()
-    ]
+    return [{"key": key, "label": labels[index]} for key, labels in BAND_LABELS.items()]
 
 
 def in_band(start: datetime | str | None, band: str | None) -> bool:

@@ -84,9 +84,8 @@ def _consenting_tastes(conversation: Conversation, constraints) -> list[ranking.
     from festro import client
 
     tastes: list[ranking.Taste] = []
-    memberships = (
-        Membership.objects.filter(conversation=conversation)
-        .select_related("participant", "participant__festro_link")
+    memberships = Membership.objects.filter(conversation=conversation).select_related(
+        "participant", "participant__festro_link"
     )
     for membership in memberships:
         if conversation.is_group and not membership.use_my_taste:
@@ -96,9 +95,7 @@ def _consenting_tastes(conversation: Conversation, constraints) -> list[ranking.
             profile = client.fetch_profile(link.credential)
             if profile:
                 tastes.append(
-                    ranking.Taste.from_profile(
-                        profile, label=membership.participant.display_name
-                    )
+                    ranking.Taste.from_profile(profile, label=membership.participant.display_name)
                 )
                 continue
         # No Festro history: what they said in the chat still counts, so a
@@ -116,7 +113,8 @@ def _consenting_tastes(conversation: Conversation, constraints) -> list[ranking.
 def _should_nudge(conversation: Conversation, tastes: list[ranking.Taste]) -> bool:
     if any(not taste.synthetic for taste in tastes):
         return False  # somebody is already connected
-    if Turn.objects.filter(conversation=conversation, role=Turn.Role.USER).count() < NUDGE_AFTER_TURNS:
+    asked = Turn.objects.filter(conversation=conversation, role=Turn.Role.USER).count()
+    if asked < NUDGE_AFTER_TURNS:
         return False
     last = conversation.connect_nudged_at
     if last and (timezone.now() - last).total_seconds() < 24 * 3600:
@@ -221,9 +219,7 @@ def respond(
         found = narrowed or found
 
     tastes = _consenting_tastes(conversation, constraints)
-    picks = ranking.choose(
-        found, tastes, locale=locale, private=not conversation.is_group
-    )
+    picks = ranking.choose(found, tastes, locale=locale, private=not conversation.is_group)
 
     # A chip with nothing behind it must never dead-end the conversation. The
     # catalog almost always has *something* in the window, so widen to the
@@ -238,9 +234,7 @@ def respond(
             category="surprise",
             free_only=constraints.free_only,
         )
-        picks = ranking.choose(
-            fallback, tastes, locale=locale, private=not conversation.is_group
-        )
+        picks = ranking.choose(fallback, tastes, locale=locale, private=not conversation.is_group)
         widened = bool(picks)
 
     if not picks:

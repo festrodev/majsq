@@ -45,7 +45,9 @@ _AREAS = {
 _FREE = re.compile(r"\b(gratuits?|gratuites?|free|no cover|sans frais)\b", re.I)
 _BUDGET = re.compile(r"(?:moins de|under|max|budget|sous)\s*\$?\s*(\d{1,3})\s*\$?", re.I)
 _BUDGET_ALT = re.compile(r"\$\s?(\d{1,3})\b")
-_PARTY_SIZE = re.compile(r"\b(?:on est|nous sommes|we are|we're|there(?:'s| are))\s+(\d{1,2})\b", re.I)
+_PARTY_SIZE = re.compile(
+    r"\b(?:on est|nous sommes|we are|we're|there(?:'s| are))\s+(\d{1,2})\b", re.I
+)
 _PARTY_SIZE_ALT = re.compile(r"\b(\d{1,2})\s*(?:personnes|people|amis|friends|pax)\b", re.I)
 
 # Slot words in both languages. Order matters: "demain soir" must read as
@@ -54,7 +56,10 @@ _SLOT_WORDS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\b(après-demain|day after tomorrow)\b", re.I), "week"),
     (re.compile(r"\b(demain|tomorrow)\b", re.I), "tomorrow"),
     (re.compile(r"\b(ce soir|tonight|à soir|asoir)\b", re.I), "tonight"),
-    (re.compile(r"\b(week-?end|fin de semaine|samedi|saturday|dimanche|sunday)\b", re.I), "weekend"),
+    (
+        re.compile(r"\b(week-?end|fin de semaine|samedi|saturday|dimanche|sunday)\b", re.I),
+        "weekend",
+    ),
     (re.compile(r"\b(cette semaine|this week|semaine)\b", re.I), "week"),
 ]
 

@@ -186,6 +186,4 @@ def build_queries(category_key: str | None, *, limit_strategies: int = 6) -> lis
 
 def chips(locale: str = "fr") -> list[dict]:
     """The chip list a surface renders. Counts are attached by the caller."""
-    return [
-        {"key": c.key, "label": c.label(locale), "emoji": c.emoji} for c in CATEGORIES
-    ]
+    return [{"key": c.key, "label": c.label(locale), "emoji": c.emoji} for c in CATEGORIES]

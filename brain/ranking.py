@@ -69,9 +69,7 @@ class Taste:
 def _normalize(weights: dict) -> dict[str, float]:
     """Scale to 0..1 so a prolific history cannot dominate a light one."""
     clean = {
-        str(key).strip().lower(): float(value)
-        for key, value in weights.items()
-        if key and value
+        str(key).strip().lower(): float(value) for key, value in weights.items() if key and value
     }
     if not clean:
         return {}
