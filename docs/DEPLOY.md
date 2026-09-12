@@ -28,70 +28,29 @@ by the person who owns the GCP project. Until it is, the deploy workflows fail
 immediately with a message saying so, which is the intended behaviour: a
 missing secret should not look like a Google outage.
 
-### 1. Let the three repos use the existing Workload Identity pool
+### 1–3. Identity and secrets — DONE (2026-09-12)
 
-Festro already deploys from GitHub without any long-lived key, using Workload
-Identity Federation. The provider has an attribute condition listing which
-repositories may borrow the service account, and the three new repos are not in
-it yet.
+Already set up; recorded here so nobody redoes it or copies the wrong pattern.
 
-Find the provider, then widen the condition:
+The Workload Identity pool's own condition was **already** org-wide
+(`assertion.repository_owner == 'festrodev'`), so nothing needed widening. The
+real gate is the per-service-account binding, which names repositories one by
+one.
 
-```bash
-gcloud iam workload-identity-pools providers list \
-  --project festro-app --location global --workload-identity-pool github
-```
+maj$q deploys as its **own** service account, `majsq-deployer@festro-app`, with
+exactly three roles: `run.admin`, `artifactregistry.writer`,
+`iam.serviceAccountUser`. Only `festrodev/majsq`, `majsqweb` and `majsqbot` may
+impersonate it.
 
-```bash
-gcloud iam workload-identity-pools providers update-oidc github \
-  --project festro-app --location global --workload-identity-pool github \
-  --attribute-condition="assertion.repository_owner=='festrodev'"
-```
+> **Do not reuse `festro-ci-releaser` here.** That is the account the private
+> repos deploy with, and it holds `container.developer` — production GKE. The
+> maj$q repos are **public**: GitHub withholds secrets from fork pull requests
+> today, but one `pull_request_target` workflow added later would turn an
+> outside contributor's PR into production deploy access. A separate identity
+> with no GKE role is what keeps that impossible rather than merely unlikely.
 
-That condition trusts every repo in the `festrodev` org. It is the simple
-version and it is what makes one setup cover all three. If you would rather
-name them explicitly:
-
-```bash
---attribute-condition="assertion.repository in ['festrodev/festro','festrodev/festroweb','festrodev/festroapp','festrodev/infrastructure','festrodev/majsq','festrodev/majsqweb','festrodev/majsqbot']"
-```
-
-> The trade is real. The org-wide condition means **any repo anyone creates
-> under `festrodev` can deploy**. That is fine while the org is five people and
-> every repo is ours; it stops being fine the moment an outside contributor can
-> create one. Revisit it then.
-
-### 2. Give the CI service account what it needs
-
-The existing service account deploys to GKE, not Cloud Run:
-
-```bash
-SA=$(gh secret list -R festrodev/festro >/dev/null && echo "<the GCP_CI_SERVICE_ACCOUNT value>")
-
-for role in roles/run.admin roles/artifactregistry.writer roles/iam.serviceAccountUser; do
-  gcloud projects add-iam-policy-binding festro-app \
-    --member "serviceAccount:$SA" --role "$role"
-done
-```
-
-`iam.serviceAccountUser` is the one people forget. Cloud Run deploys *as* a
-runtime service account, and deploying as one counts as using it.
-
-### 3. Copy the two secrets onto the three repos
-
-```bash
-WIP='<GCP_WORKLOAD_IDENTITY_PROVIDER value>'
-SA='<GCP_CI_SERVICE_ACCOUNT value>'
-
-for repo in majsq majsqweb majsqbot; do
-  gh secret set GCP_WORKLOAD_IDENTITY_PROVIDER -R "festrodev/$repo" --body "$WIP"
-  gh secret set GCP_CI_SERVICE_ACCOUNT        -R "festrodev/$repo" --body "$SA"
-done
-```
-
-You cannot read the existing values back out of GitHub — secrets are
-write-only. Take them from the GCP console, or from wherever you stored them
-when you set up festro's deploy.
+`GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_CI_SERVICE_ACCOUNT` are set on all
+three repos.
 
 ### 4. Create the runtime secrets in Secret Manager
 
