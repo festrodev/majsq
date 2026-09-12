@@ -10,8 +10,9 @@ def healthz(_request):
 urlpatterns = [
     path("healthz", healthz, name="healthz"),
     path("admin/", admin.site.urls),
-    # AG-UI transport — what CopilotKit's runtime talks to.
+    # The HTTP contract every surface calls. majsqbot and majsqweb are both
+    # clients of this; neither holds the model key or talks to Festro directly.
+    path("api/", include("api.urls")),
+    # AG-UI transport — what CopilotKit's runtime streams from.
     path("agui/", include("agui.urls")),
-    # Telegram transport — same brain, different surface.
-    path("tg/", include("bot.urls")),
 ]

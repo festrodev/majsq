@@ -7,5 +7,3 @@ openai==1.99.1
 ag-ui-protocol==0.1.8
 python-telegram-bot==21.10
 gunicorn==23.0.0
-psycopg[binary]==3.2.3
-dj-database-url==2.3.0

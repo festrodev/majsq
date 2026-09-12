@@ -16,10 +16,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Repo-root .env, then agent/.env — the second wins, so a service-specific
-# override does not need the whole file duplicated.
-load_dotenv(BASE_DIR.parent / ".env")
-load_dotenv(BASE_DIR / ".env", override=True)
+load_dotenv(BASE_DIR / ".env")
 
 
 def _flag(name: str, default: str = "0") -> bool:
@@ -45,8 +42,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "core",
+    "api",
     "agui",
-    "bot",
 ]
 
 MIDDLEWARE = [
@@ -78,20 +75,16 @@ TEMPLATES = [
     }
 ]
 
-# SQLite by default so `manage.py migrate` works on a fresh clone with no
-# services running. DATABASE_URL (Postgres) is what the deployed service uses.
-_database_url = os.environ.get("DATABASE_URL", "").strip()
-if _database_url:
-    import dj_database_url  # type: ignore[import-not-found]
-
-    DATABASES = {"default": dj_database_url.parse(_database_url, conn_max_age=600)}
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+# SQLite, deliberately. A hackathon clone must migrate and run with nothing
+# installed but pip packages. Postgres is a deployment concern: add
+# `psycopg[binary]` and `dj-database-url` and read DATABASE_URL here when this
+# service moves to Cloud Run.
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
+}
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = "en-ca"
@@ -139,7 +132,7 @@ FESTRO_CLIENT_SECRET = os.environ.get("FESTRO_CLIENT_SECRET", "")
 # Serve the bundled fixture catalog instead of calling api.festro.com. A fork
 # with no credentials runs the whole demo this way.
 FESTRO_MOCK = _flag("FESTRO_MOCK", "0")
-FESTRO_FIXTURES = Path(os.environ.get("FESTRO_FIXTURES", BASE_DIR.parent / "fixtures"))
+FESTRO_FIXTURES = Path(os.environ.get("FESTRO_FIXTURES", BASE_DIR / "fixtures"))
 
 # Every outbound call is identifiable, so a noisy fork can be rate-limited
 # without touching real Festro users.
