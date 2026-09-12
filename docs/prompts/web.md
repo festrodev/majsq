@@ -2,7 +2,11 @@
 
 # Your part: the web surface (`majsqweb`)
 
-You own every page. The scaffold is Next.js 16 (App Router), React 19,
+You own `/`, `/chat`, the server-side proxy routes, and the shared components.
+**Jihoo works in this same repo on `/m/[share_id]` and `src/components/Map*.tsx`
+only** — those files are theirs, yours are listed in `TEAM.md`. `PickCard` is
+yours: Jihoo imports it, so tell them when its props change. Pull from `main`
+before every push. The scaffold is Next.js 16 (App Router), React 19,
 Tailwind v4, with `@copilotkit/react-core`, `@copilotkit/react-ui`,
 `@copilotkit/runtime`, `@ag-ui/client` and `maplibre-gl` installed. Nothing
 else exists yet. `DESIGN.md` is your spec; build the five components it names
@@ -68,14 +72,10 @@ sentence end in the same place. Show `nudge.connect` when `suggest_connect`.
 Text input at the bottom, `Enter` sends. Loading text, not a spinner:
 "Je cherche…".
 
-### 6. `/m/[share_id]` — the map
+### 6. `/m/[share_id]` — not yours
 
-Server component fetches `GET {agent}/api/shares/{id}/` (no secret needed).
-MapLibre with OSM raster tiles, no key, dark style on dark theme. Three
-`MapMarker`s numbered 1–3, fit bounds with 48px padding, popover shows the
-`PickCard`. Under the map, the three `PickCard`s again for people who cannot
-use the map. This page is what a Telegram user lands on, so it must be fast
-on a phone and work with no cookie.
+Jihoo is building it. Make sure `PickCard` is importable and self-contained
+(no dependency on chat state or the session cookie) so their page can use it.
 
 ### 7. CopilotKit, once the stream exists
 

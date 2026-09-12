@@ -7,13 +7,27 @@ minimum that keeps the sessions from building four different products.
 
 | Person | Repo | Owns | Never touches |
 |---|---|---|---|
-| **Agent** | `majsq` | The brain, Festro access, the AG-UI stream, `docs/CONTRACT.md` | UI of any kind |
-| **Web** | `majsqweb` | Every page, CopilotKit wiring, the map | Ranking, Festro calls |
-| **Bot** | `majsqbot` | Telegram behaviour, the login handoff, the real-group test | Ranking, Festro calls |
-| **Ali** | Festro's private repos | The connect grant on festro.com, credentials, deploy, the video | Surface code (unless asked) |
+| **Quan** | `majsq` | The brain, Festro access, the AG-UI stream, `docs/CONTRACT.md` | UI of any kind |
+| **Manh** | `majsqweb` | `/`, `/chat`, CopilotKit wiring, the shared components | Ranking, Festro calls, `src/app/m/**` |
+| **Selene** | `majsqbot` | Telegram behaviour, the login handoff, the real-group test | Ranking, Festro calls |
+| **Jihoo** | `majsqweb` (map) + all three | `/m/[share_id]`, calendar links, and from 14:30 the whole submission | Manh's files: `/`, `/chat`, `src/app/api/**`, the shared components |
+| **Ali** | Festro's private repos | The connect grant on festro.com, credentials, deploy | Surface code (unless asked) |
 
-One owner per repo. You push to `main` of **your** repo directly today —
-there is no time for review — and you open a PR to anyone else's.
+One owner per repo, except `majsqweb`, where two people work on **disjoint
+directories**:
+
+| Manh | Jihoo |
+|---|---|
+| `src/app/page.tsx`, `src/app/chat/**`, `src/app/api/**` | `src/app/m/[share_id]/**` |
+| `src/components/{Chip,PickCard,QuestionBlock,ConsentToggle}.tsx` | `src/components/Map*.tsx` |
+| `src/lib/turn.ts` | `src/lib/share.ts` |
+
+`PickCard` is Manh's. Jihoo imports it and never edits it; if the map needs a
+change to it, ask in the group chat. Both pull from `main` before every push.
+
+You push to `main` of **your** repo directly today — there is no time for
+review — except in `majsqweb`, where Manh pushes to `main` and Jihoo opens a
+PR from `feat/map`. You open a PR for anyone else's repo.
 
 ## The three documents
 
@@ -67,9 +81,13 @@ one shared file is `CONTRACT.md`, and only one person edits it.
 - **Bot:** In a real Telegram group on a real phone: welcome on add, silent
   until asked, question chips, three picks + poll + map button, consent
   toggle acknowledges. `Dockerfile` builds.
+- **Jihoo:** `/m/[share_id]` renders three numbered markers and three
+  PickCards from a real share id, on a phone, in both themes. Calendar links
+  work. From 14:30: clean-clone check on all three repos, then the video,
+  description and social post.
 - **Ali:** `majsq` registered as a third-party application on Festro; the
   connect grant endpoints and the approve page exist; the credential works
-  against `GET /api/v1/connect/profile/`. Then the video.
+  against `GET /api/v1/connect/profile/`.
 
 ## Timeline
 
@@ -78,8 +96,9 @@ one shared file is `CONTRACT.md`, and only one person edits it.
 | 13:30 | Each repo demo-able on its own with `FESTRO_MOCK=1`. |
 | 14:00 | The three connected: bot → agent → web map link, live on a phone. |
 | 14:30 | **Feature freeze.** Only fixes after this. |
-| 15:00 | Video recorded, description written, sponsor post drafted. |
-| 15:30 | A clean clone of each repo runs from its README. Submit. |
+| 14:30 | Jihoo starts the clean-clone check on all three repos. Any README that fails gets a PR now. |
+| 15:00 | Video shot, description written, sponsor post drafted. |
+| 15:45 | **Submit.** Do not wait for 16:00. |
 
 ## Git
 
