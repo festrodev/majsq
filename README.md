@@ -123,6 +123,17 @@ Run with `FESTRO_MOCK=1` while you are developing and you won't touch it at all.
 
 ---
 
+## Building on this, in parallel
+
+Four people, four agent sessions, one afternoon. Read these first, in order:
+
+| Doc | What it settles |
+|---|---|
+| [`docs/DESIGN.md`](docs/DESIGN.md) | How it looks and sounds: tokens, canonical strings, emoji, the five components, voice. |
+| [`docs/CONTRACT.md`](docs/CONTRACT.md) | The API between the agent and the surfaces. The only thing to agree on. |
+| [`docs/TEAM.md`](docs/TEAM.md) | Who owns which repo, and the rules that stop parallel builds colliding. |
+| [`docs/prompts/`](docs/prompts/) | One ready-to-paste prompt per person, for their own agent session. |
+
 ## Design notes
 
 Two decisions are worth reading before you change anything:
