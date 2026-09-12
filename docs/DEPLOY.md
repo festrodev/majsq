@@ -88,12 +88,24 @@ done
 
 ### 5. Create the App Hosting backend and the subdomain
 
-Same recipe as `festroqa` and `festrolabs`:
+Same recipe as `festroqa` and `festrolabs`. **There is no `--backend` flag** —
+the name is a prompt, and 13.x errors with `unknown option '--backend'` if you
+pass one. `-a/--app` is a Firebase *web app* id, which is a different thing
+again and not needed here.
 
 ```bash
-npx firebase-tools@13 apphosting:backends:create --project festro-app \
-  --location us-east4 --backend majsq
+npx firebase-tools@13 apphosting:backends:create --project festro-app --location us-east4
 ```
+
+**This cannot run non-interactively.** It asks, in order:
+
+| Prompt | Answer |
+|---|---|
+| GitHub repo | `festrodev/majsqweb`. Not listed? It sends you to install the Firebase GitHub App on the `festrodev` org — the existing backends connect to `festrocom-*` repos, so this connection is new. |
+| Branch | `main` |
+| Backend name | `majsq` → becomes `majsq--festro-app.us-east4.hosted.app` |
+| Root directory | `/` |
+| Automatic rollouts | **No.** Merging is not shipping; the Deploy web workflow rolls out on demand. |
 
 Then DNS, with the Cloudflare CLI:
 
