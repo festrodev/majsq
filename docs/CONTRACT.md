@@ -241,8 +241,38 @@ The agent is the only thing that talks to Festro, and only reads:
   `q`, `tags` (verbatim label, e.g. `Hip Hop`), `price=free`, `market`.
 - `GET /api/v1/tags/`
 - `GET /api/v1/connect/profile/` — with a member's opaque connect credential.
-  Not built on Festro's side yet; the agent's `FESTRO_MOCK=1` returns a fake
-  profile so the personalization path can be demonstrated.
+  **Built and merged-pending on Festro's side** (festro#574). Returns aggregate
+  preference only: weighted tags, organizers and venues, a price band, usual
+  nights, and three counts. No email, no event rows, no reservations.
+  `FESTRO_MOCK=1` still returns a fixture profile so the personalization path
+  is demonstrable without credentials.
+
+### Connecting a member's Festro account
+
+The credential maj$q holds is **not** a Festro user token — it is accepted by
+the profile endpoint alone and can do nothing else. Getting one:
+
+1. The surface sends the member to
+   `https://festro.com/connect/authorize?client_id=fc_majsq&redirect_uri=…&state=…&code_challenge=…`
+   (PKCE S256; `state` and the verifier are held server-side, bound to the
+   session or the verified Telegram id).
+2. Festro redirects back to the registered callback with `?code&state`.
+3. The surface posts the code to the agent, which exchanges it using maj$q's
+   own client secret and stores the credential against the participant.
+
+Agent endpoint for step 3 — **to be added by the agent owner**:
+
+```
+POST /api/link/
+{ "channel": "telegram"|"web", "kind": "dm"|"group"|"web",
+  "conversation_id": "…", "participant_id": "…",
+  "code": "fcg_…", "code_verifier": "…", "redirect_uri": "…" }
+→ { "connected": true, "display_name": "…" }
+```
+
+Registered redirect URIs today: `https://majsq.festro.com/connect/callback`
+and `http://localhost:3000/connect/callback`. Ali holds
+`FESTRO_CLIENT_ID` / `FESTRO_CLIENT_SECRET`; ask him privately, never commit them.
 
 Surfaces never call Festro. If you find yourself adding `api.festro.com` to
 a surface, stop and ask for the field in this file instead.
