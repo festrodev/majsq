@@ -1,0 +1,87 @@
+name: Deploy agent
+
+# Manual only, on purpose. Nothing here should fire because someone merged a
+# PR — deciding to put a new agent in front of a live Telegram group is a
+# decision, not a side effect.
+#
+# Anyone with write access can run it: Actions tab → Deploy agent → Run workflow.
+# One-time setup (Ali, once) is in docs/DEPLOY.md.
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Cloud Run service name
+        type: string
+        default: majsq-agent
+      region:
+        description: Cloud Run region
+        type: string
+        default: northamerica-northeast1
+
+permissions:
+  contents: read
+  id-token: write # keyless GCP auth via Workload Identity Federation
+
+env:
+  PROJECT_ID: festro-app
+  REPOSITORY: northamerica-northeast1-docker.pkg.dev/festro-app/festro
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the deploy secrets exist
+        # Without this the run fails deep inside the auth action with a message
+        # that reads like a Google outage. Say what is actually missing.
+        run: |
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ] || [ -z "${{ secrets.GCP_CI_SERVICE_ACCOUNT }}" ]; then
+            echo "::error::Deploy secrets are not set on this repo."
+            echo "GCP_WORKLOAD_IDENTITY_PROVIDER and GCP_CI_SERVICE_ACCOUNT are both required."
+            echo "See docs/DEPLOY.md — it is a one-time setup and only Ali can do it."
+            exit 1
+          fi
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_CI_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authorize Docker for Artifact Registry
+        run: gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev --quiet
+
+      - name: Build and push
+        id: build
+        run: |
+          TAG="${{ env.REPOSITORY }}/majsq-agent:${GITHUB_SHA::8}"
+          docker build -t "$TAG" .
+          docker push "$TAG"
+          echo "image=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${{ inputs.service }}" \
+            --image "${{ steps.build.outputs.image }}" \
+            --region "${{ inputs.region }}" \
+            --project "${{ env.PROJECT_ID }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --max-instances 2 \
+            --memory 512Mi \
+            --set-env-vars "DJANGO_DEBUG=0,FESTRO_MOCK=0,MAJSQ_OPEN_AGUI=0" \
+            --set-secrets "DJANGO_SECRET_KEY=majsq-django-secret:latest,MAJSQ_SERVICE_SECRET=majsq-service-secret:latest,OPENAI_API_KEY=majsq-openai-key:latest,FESTRO_CLIENT_ID=majsq-festro-client-id:latest,FESTRO_CLIENT_SECRET=majsq-festro-client-secret:latest"
+
+      - name: Show the URL
+        run: |
+          URL=$(gcloud run services describe "${{ inputs.service }}" \
+            --region "${{ inputs.region }}" --project "${{ env.PROJECT_ID }}" \
+            --format 'value(status.url)')
+          echo "### Agent deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Set this as \`MAJSQ_AGENT_URL\` in majsqweb and majsqbot." >> "$GITHUB_STEP_SUMMARY"
+          curl -sf "$URL/healthz" && echo "health check passed"

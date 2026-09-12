@@ -114,13 +114,37 @@ Montréal. It uses three **read-only** endpoints:
 | `GET /api/v1/tags/` | The tag taxonomy behind the category chips. |
 | `GET /api/v1/connect/profile/` | One member's minimized taste profile, with their own opaque connect credential. |
 
-**If you fork this**, please: keep the `User-Agent` that identifies your build,
-stay inside the 60 requests/minute anonymous rate limit, don't bulk-scrape or
-mirror the catalog, and link back to festro.com for the event itself. Event
-artwork is licensed to Festro for its own pages and is deliberately never
-re-hosted here — maj$q sends text and links. The API may change without notice.
+### Terms of use
 
-Run with `FESTRO_MOCK=1` while you are developing and you won't touch it at all.
+The events endpoints are open and unauthenticated, and you are welcome to build
+on them. The terms are short.
+
+**You may** read the public catalog for an app, a bot, a site, a class project
+or a business — we don't distinguish — so long as a person looking at your
+thing can tell the listings came from Festro and can get to the event page.
+
+**Please do** send a `User-Agent` that names your project and links to it, stay
+inside the anonymous rate limit of 60 requests per minute per IP, and cache
+what you fetch instead of re-querying on every page view. All three of those
+are in this repo already if you want a working example.
+
+**Please don't** bulk-download or mirror the catalog as a dataset, republish it
+as a competing listing, or drop the link back to festro.com. And event artwork
+is licensed to Festro for Festro's own pages only — it is not ours to pass on,
+so maj$q sends text and links, and anything you build should too.
+
+**No promises.** There is no uptime commitment and no stability guarantee
+beyond the `/v1/` path. Endpoints, fields and limits may change or disappear
+without notice, and we may withdraw access from a specific caller if it is
+causing problems for the organizers and venues whose listings these are.
+
+**If you need more than this** — a higher limit, fields that aren't exposed, a
+guarantee you can build a business on, or the bulk data we just asked you not
+to take — write to [support@festro.com](mailto:support@festro.com). We would
+much rather have the conversation than have you work around us.
+
+Run with `FESTRO_MOCK=1` while you are developing and you will not touch the
+live API at all.
 
 ---
 

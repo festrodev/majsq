@@ -1,0 +1,100 @@
+name: CI
+
+# Runs on every push and PR. These repos are PUBLIC, so GitHub Actions minutes
+# are free — unlike the private Festro repos, which are dispatch-only to
+# conserve quota. Keep it that way: if this repo ever goes private, switch the
+# triggers below to `workflow_dispatch` first.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # A new push supersedes the run in flight for the same ref.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Everything runs against the bundled fixture catalog. CI never touches
+    # api.festro.com — a red build must mean our code broke, not that someone
+    # else's service was slow.
+    env:
+      FESTRO_MOCK: "1"
+      MAJSQ_OPEN_AGUI: "1"
+      DJANGO_SECRET_KEY: ci-only-not-a-real-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff==0.8.4
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format
+        run: ruff format --check .
+
+      - name: Migrations are committed
+        # Catches the classic "model changed, migration forgotten" break, which
+        # only shows up for the next person to run migrate.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Django checks
+        run: python manage.py check
+
+      - name: Tests
+        run: python manage.py test
+
+      - name: Smoke — a real conversation end to end
+        # The suite can pass while the app is broken at the seams, so drive the
+        # actual HTTP contract once: ask a question, tap a chip, get picks.
+        run: |
+          python manage.py migrate --noinput
+          python manage.py runserver 8000 --noreload &
+          for i in $(seq 1 30); do
+            curl -sf localhost:8000/healthz > /dev/null && break
+            sleep 1
+          done
+          curl -sf localhost:8000/healthz
+
+          ask=$(curl -sf localhost:8000/api/turn/ \
+            -H 'Content-Type: application/json' \
+            -d '{"channel":"web","kind":"web","conversation_id":"ci","participant_id":"ci","locale":"fr","text":"quoi faire ce week-end?"}')
+          echo "$ask" | python -c "import json,sys; d=json.load(sys.stdin); assert d['question']['name']=='category', d; print('  question ok')"
+
+          picks=$(curl -sf localhost:8000/api/turn/ \
+            -H 'Content-Type: application/json' \
+            -d '{"channel":"web","kind":"web","conversation_id":"ci","participant_id":"ci","locale":"fr","text":"","chosen":{"category":"theatre"}}')
+          echo "$picks" | python -c "
+          import json,sys
+          d = json.load(sys.stdin)
+          assert d['picks'], 'no picks returned'
+          assert d['share_id'], 'no share id'
+          for p in d['picks']:
+              assert 'cover_image' not in p and 'card_image' not in p, 'artwork leaked into a pick'
+          print(f\"  {len(d['picks'])} picks ok, no artwork\")
+          "
+
+  docker:
+    # Proves the image the deploy workflow will build actually builds.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: majsq-agent:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
