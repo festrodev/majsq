@@ -6,13 +6,15 @@ most-reviewed decision in this project.
 
 ## What maj$q does NOT do
 
-It never holds a Festro **user token**. Festro's device tokens authenticate a
-person to the whole API: with one, a caller can read anything that person can
-read and call destructive endpoints, including account deletion. Handing one to
-a third-party bot — even a first-party one — means the bot is the account.
+It never holds a Festro **user token**. A session credential is designed to
+carry a person's full authority, which is exactly right for that person's own
+device and exactly wrong for a third-party bot: handing one over means the bot
+*is* the account, with whatever that account can do.
 
 Revocability does not fix this. It limits the blast radius *after* someone
-notices, not the authority the credential carries while it is live.
+notices, not the authority the credential carries while it is live. So the
+right shape is not "a token we can revoke quickly" but a credential that never
+had the authority in the first place.
 
 ## What it does instead
 

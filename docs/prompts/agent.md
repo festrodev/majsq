@@ -16,7 +16,7 @@ FESTRO_MOCK=1 MAJSQ_OPEN_AGUI=1 python manage.py runserver
 
 - `POST /api/turn/` — ask → question chips → tapped chip → three picks + poll + map share id. Reads the conversation first and never re-asks what was already said. Widens to the ranked feed when a category is empty and says so.
 - `brain/reading.py` — regex extraction of constraints (window, band, category, area, budget, party size), and the `required()` / `optional()` question gates.
-- `brain/categories.py` — categories as *definitions* (tags + keyword queries + venues). Read its docstring: only ~13% of live events carry a tag, so tag-only chips were dead on arrival.
+- `brain/categories.py` — categories as *definitions* (tags + keyword queries + venues). Read its docstring before touching it: tag coverage is uneven enough that tag-only chips were dead on arrival.
 - `brain/search.py` — runs a category's strategies against the catalog, merges, drops started events, applies the part-of-day band.
 - `brain/ranking.py` — group score `0.7·mean + 0.3·min` over member affinities, one venue per pick, never the same title twice.
 - `brain/engine.py` — one turn. Consent is checked live on every turn before any cached profile.

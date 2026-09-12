@@ -2,24 +2,22 @@
 
 ## Categories are not tags
 
-The first design gave each category chip one Festro tag. Measuring the live
-catalog on 2026-09-12 killed it:
+The first design gave each category chip one tag. Sampling the live feed
+killed it, for two reasons that apply to most event catalogs:
 
-- 3,421 upcoming Montréal events
-- **8 of the top 60 carried any tag at all**
-- the taxonomy is almost entirely music genre — classical 143, rock 109,
-  electronic 87, pop 51, hip-hop 26 — with no comedy, theatre, dance or family
-  tag carrying real usage
+- **Tag coverage is uneven.** Tags are optional metadata, and a lot of
+  inventory arrives from sources that never filled them in.
+- **The vocabulary is narrower than the catalog.** It leans to music genre, so
+  "théâtre", "danse" and "humour" have little behind them even though the
+  catalog is full of those events.
 
-Tag-only chips would have hidden ~87% of the catalog, and the chips a
-Montrealer actually wants would have come back empty while the catalog was full
-of exactly those events.
+A chip that promises picks and returns none is worse than no chip.
 
 A category is now a *definition*: tags, plus keyword queries, plus venues.
-Keyword queries reach everything because Festro's search covers title, venue,
-city, lineup and organizer — which is how "Les Grands Ballets" finds 31
-untagged dance events. As tagging improves, the tag strategy quietly carries
-more of the weight.
+Keyword queries reach everything because the search covers title, venue, city,
+lineup and organizer — which is how "Les Grands Ballets" finds the dance
+listings that no tag filter would. As tagging improves, the tag strategy
+quietly carries more of the weight without any change here.
 
 ## Time slot before category
 

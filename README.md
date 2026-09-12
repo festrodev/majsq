@@ -23,7 +23,7 @@ Montréal, 12 September 2026.
 ```
   Telegram group  ─┐
   Telegram DM     ─┼─►  majsq-agent (Django)  ─►  Festro public catalog
-  Web chat        ─┘         │                    3,400+ live Montréal events
+  Web chat        ─┘         │                    live Montréal events
    (CopilotKit)              │
                              └─►  OpenAI  (tools: search, ask, rank)
 ```
@@ -139,13 +139,14 @@ Four people, four agent sessions, one afternoon. Read these first, in order:
 
 Two decisions are worth reading before you change anything:
 
-- **Categories are not tags.** Only ~13% of live events carry a tag, and the
-  taxonomy is almost entirely music genre. A category is a *definition* —
-  tags plus keyword queries plus venues — merged across several catalog calls.
-  See [`brain/categories.py`](brain/categories.py).
+- **Categories are not tags.** Tag coverage on any real event feed is uneven,
+  and the vocabulary is narrower than the catalog. So a category is a
+  *definition* — tags plus keyword queries plus venues — merged across several
+  catalog calls. See [`brain/categories.py`](brain/categories.py).
 - **A connected account is not an access token.** maj$q never holds a Festro
-  user token. It holds an opaque credential that is accepted by exactly one
-  endpoint and carries no account authority. See [`docs/connect.md`](docs/connect.md).
+  session credential. It holds an opaque credential accepted by exactly one
+  endpoint, which carries no authority over the account at all. See
+  [`docs/connect.md`](docs/connect.md).
 
 ---
 

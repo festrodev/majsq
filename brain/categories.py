@@ -2,17 +2,20 @@
 
 ## Why this file exists
 
-The obvious design — one chip per Festro tag — does not work, and the catalog
-says so. Measured against the live Montréal feed on 2026-09-12:
+The obvious design — one chip per Festro tag — does not survive contact with a
+real catalog, and this is not specific to Festro. Two things are true of most
+event feeds:
 
-* 3421 upcoming events, but only **8 of the top 60 carried any tag at all**.
-* The taxonomy is almost entirely *music genre* (classical 143, rock 109,
-  electronic 87, pop 51, hip-hop 26 …). There is no comedy, theatre, dance or
-  family tag with real usage behind it.
+* **Tag coverage is uneven.** Plenty of listings carry no tag at all, because
+  tags are optional metadata and a lot of inventory arrives from sources that
+  never filled them in.
+* **The vocabulary is narrower than the catalog.** Here it leans heavily to
+  music genre, so the chips a Montrealer actually wants — "théâtre", "danse",
+  "humour" — have little or nothing behind them even while the catalog is full
+  of exactly those events.
 
-So tag-only chips would hide ~87% of what Festro actually lists, and the chips
-a Montrealer wants ("théâtre", "danse", "humour") would come back empty while
-the catalog is full of exactly those events.
+A chip that promises picks and returns none is worse than no chip, so the chips
+cannot be a thin wrapper over the tag field.
 
 ## What a category is instead
 
@@ -20,8 +23,8 @@ A **definition**: any number of tag filters, keyword queries, and venue slugs.
 Running a category means running each strategy against the public catalog and
 merging the results, newest-first, de-duplicated on ``short_id``. Keyword
 queries reach the whole catalog because Festro's search covers title, venue
-name, city, lineup and organizer name — which is why "Les Grands Ballets" finds
-31 untagged dance events that no tag filter would.
+name, city, lineup and organizer name — which is why a venue keyword like
+"Les Grands Ballets" reaches a run of dance listings that no tag filter would.
 
 A category therefore degrades gracefully: as Festro's tagging improves, the tag
 strategy carries more of the weight and the keywords quietly matter less.
