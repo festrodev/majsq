@@ -61,9 +61,7 @@ def _snapshot(reply: engine.Reply) -> dict:
 
 def _event_stream(run_input: RunAgentInput, encoder: EventEncoder) -> Iterator[str]:
     """Run the existing brain once and encode its reply as AG-UI SSE events."""
-    yield encoder.encode(
-        RunStartedEvent(thread_id=run_input.thread_id, run_id=run_input.run_id)
-    )
+    yield encoder.encode(RunStartedEvent(thread_id=run_input.thread_id, run_id=run_input.run_id))
 
     try:
         identity = {
@@ -92,9 +90,7 @@ def _event_stream(run_input: RunAgentInput, encoder: EventEncoder) -> Iterator[s
 
         message_id = str(uuid4())
         yield encoder.encode(TextMessageStartEvent(message_id=message_id))
-        yield encoder.encode(
-            TextMessageContentEvent(message_id=message_id, delta=reply.text)
-        )
+        yield encoder.encode(TextMessageContentEvent(message_id=message_id, delta=reply.text))
         yield encoder.encode(TextMessageEndEvent(message_id=message_id))
         yield encoder.encode(StateSnapshotEvent(snapshot=_snapshot(reply)))
         yield encoder.encode(
@@ -102,9 +98,7 @@ def _event_stream(run_input: RunAgentInput, encoder: EventEncoder) -> Iterator[s
         )
     except Exception:
         logger.exception("AG-UI run failed")
-        yield encoder.encode(
-            RunErrorEvent(message="Agent run failed.", code="agent_error")
-        )
+        yield encoder.encode(RunErrorEvent(message="Agent run failed.", code="agent_error"))
 
 
 @csrf_exempt
