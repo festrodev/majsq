@@ -108,6 +108,29 @@ one shared file is `CONTRACT.md`, and only one person edits it.
 | 15:00 | Video shot, description written, sponsor post drafted. |
 | 15:45 | **Submit.** Do not wait for 16:00. |
 
+## CI and deploy
+
+Every repo has GitHub Actions. **CI runs on every push and PR** — these repos
+are public, so Actions minutes are free, unlike the private Festro repos.
+
+| Repo | CI checks |
+|---|---|
+| `majsq` | ruff, format, uncommitted migrations, Django checks, tests, a live smoke test of the HTTP contract, Docker build |
+| `majsqbot` | ruff, format, imports resolve, webhook rejects an unsigned update and de-duplicates retries, Docker build |
+| `majsqweb` | lint, typecheck, build, **no hex values in components** |
+
+That last one is mechanical enforcement of the one rule that keeps two people
+in one repo from producing two products: components use tokens, never a hex
+literal. If CI fails on it, take the color from `globals.css`.
+
+**Deploying** is Actions → pick the workflow → **Run workflow**. Anyone with
+write access can run it; nothing deploys on a merge. Order the first time:
+agent → web → bot (the bot takes the agent's URL as an input).
+
+The deploy workflows need two GCP secrets that only Ali can add — until then
+they fail immediately with a message saying exactly that. Setup is
+[`docs/DEPLOY.md`](DEPLOY.md). **None of it is needed to submit.**
+
 ## Git
 
 - Branch names: `feat/<thing>` in your own repo; push to `main` when it runs.
