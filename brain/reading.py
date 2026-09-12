@@ -94,6 +94,12 @@ class Constraints:
     free_only: bool = False
     party_size: int | None = None
     stated_tags: list[str] = field(default_factory=list)
+    # Optional questions already put to this conversation. "Peu importe" is a
+    # real answer, but it carries an empty value that `merge` drops — so
+    # without remembering that the question was ASKED, the agent asks it again
+    # on the next turn, forever. Tracking the question rather than the value is
+    # what makes "no preference" expressible at all.
+    answered: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -102,6 +108,11 @@ class Constraints:
         """Later statements win, but never overwrite something with nothing."""
         merged = Constraints(**self.as_dict())
         for key, value in other.as_dict().items():
+            if key == "answered":
+                # Unions, never replaces: a question answered three turns ago
+                # is still answered.
+                merged.answered = sorted(set(merged.answered) | set(value or []))
+                continue
             if value in (None, False, [], ""):
                 continue
             setattr(merged, key, value)
@@ -219,7 +230,10 @@ def optional(constraints: Constraints, *, candidate_count: int) -> list[str]:
         narrowing.append("area")
     elif not (constraints.budget_max or constraints.free_only):
         narrowing.append("budget")
-    return narrowing[:MAX_OPTIONAL_QUESTIONS]
+    # Never ask the same optional question twice. Whatever they tapped — a
+    # neighbourhood or "peu importe" — the question is spent.
+    already = set(constraints.answered or [])
+    return [name for name in narrowing if name not in already][:MAX_OPTIONAL_QUESTIONS]
 
 
 def question_chips(name: str, *, locale: str = "fr") -> dict:

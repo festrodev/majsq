@@ -15,7 +15,7 @@ on an API key being live at 15:00 on a Saturday is not a demo.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 
 from django.conf import settings
 from django.utils import timezone
@@ -63,6 +63,23 @@ class Reply:
             "suggest_connect": self.suggest_connect,
             "poll": self.poll,
         }
+
+
+def _remembered(conversation: Conversation) -> reading.Constraints:
+    """What the agent already knew, from the last reply it made.
+
+    Every reply persists its state, including the question replies — a state
+    saved only when picks are produced would be lost across exactly the turns
+    that gather it.
+    """
+    state = (
+        Turn.objects.filter(conversation=conversation, role=Turn.Role.AGENT)
+        .order_by("-created_at")
+        .values_list("state", flat=True)
+        .first()
+    ) or {}
+    known = {f.name for f in fields(reading.Constraints)}
+    return reading.Constraints(**{k: v for k, v in state.items() if k in known})
 
 
 def _recent_messages(conversation: Conversation) -> list[str]:
@@ -122,6 +139,22 @@ def _should_nudge(conversation: Conversation, tastes: list[ranking.Taste]) -> bo
     return True
 
 
+def _asked(conversation, constraints, question: dict, *, locale: str) -> Reply:
+    """Ask one question, and remember having asked it.
+
+    The question's own name joins ``answered`` here rather than when the reply
+    comes back, so a surface that drops the answer cannot make the agent loop.
+    """
+    constraints.answered = sorted(set(constraints.answered) | {question["name"]})
+    Turn.objects.create(
+        conversation=conversation,
+        role=Turn.Role.AGENT,
+        text=question["question"],
+        state=constraints.as_dict(),
+    )
+    return Reply(text=question["question"], question=question, state=constraints.as_dict())
+
+
 def _public_pick(event: dict) -> dict:
     """The shape that reaches a chat message and the map page.
 
@@ -165,10 +198,19 @@ def respond(
     messages = _recent_messages(conversation)
     if text:
         messages.append(text)
-    constraints = reading.extract(messages)
+    # What this conversation has established so far, in three layers.
+    #
+    # The persisted layer is load-bearing and was missing: constraints were
+    # re-derived from MESSAGES on every turn, so anything TAPPED rather than
+    # typed evaporated. A pure chip flow — tap "ce week-end", then tap
+    # "théâtre" — lost the window on the second turn, because that turn
+    # carried no text to re-read. Telegram is entirely chip-driven, so this
+    # was the normal path, not an edge case.
+    constraints = _remembered(conversation).merge(reading.extract(messages))
 
     if chosen:
         override = reading.Constraints(
+            answered=sorted(set(constraints.answered) | set(chosen.keys())),
             time_slot=chosen.get("time_slot"),
             band=chosen.get("band"),
             category=chosen.get("category"),
@@ -184,11 +226,7 @@ def respond(
     still_missing = reading.required(constraints)
     if still_missing:
         question = reading.question_chips(still_missing[0], locale=locale)
-        return Reply(
-            text=question["question"],
-            question=question,
-            state=constraints.as_dict(),
-        )
+        return _asked(conversation, constraints, question, locale=locale)
 
     found = search.candidates(
         time_slot=constraints.time_slot,
@@ -201,11 +239,7 @@ def respond(
     narrowing = reading.optional(constraints, candidate_count=len(found))
     if narrowing:
         question = reading.question_chips(narrowing[0], locale=locale)
-        return Reply(
-            text=question["question"],
-            question=question,
-            state=constraints.as_dict(),
-        )
+        return _asked(conversation, constraints, question, locale=locale)
 
     if constraints.area:
         narrowed = [

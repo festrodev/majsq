@@ -30,6 +30,22 @@ from core.models import Turn
 logger = logging.getLogger(__name__)
 
 
+def _locale(run_input: RunAgentInput) -> str:
+    """The locale the web surface asked for, defaulting to French.
+
+    It arrives in ``state`` or ``forwardedProps`` depending on how CopilotKit
+    is wired, so both are accepted. Hardcoding "fr" here meant an English
+    visitor got French replies from an engine that speaks both — the surface
+    could pass a locale and nothing would read it.
+    """
+    for source in (run_input.state, getattr(run_input, "forwarded_props", None)):
+        if isinstance(source, dict):
+            value = source.get("locale")
+            if isinstance(value, str) and value.strip():
+                return "fr" if value.strip().lower().startswith("fr") else "en"
+    return "fr"
+
+
 def _last_user_text(run_input: RunAgentInput) -> str:
     """Return the last plain-text user message CopilotKit sent."""
     for message in reversed(run_input.messages):
@@ -69,7 +85,7 @@ def _event_stream(run_input: RunAgentInput, encoder: EventEncoder) -> Iterator[s
             "kind": "web",
             "conversation_id": run_input.thread_id,
             "participant_id": run_input.thread_id,
-            "locale": "fr",
+            "locale": _locale(run_input),
         }
         conversation, participant, _ = _resolve(identity)
         text = _last_user_text(run_input)
