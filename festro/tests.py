@@ -26,3 +26,20 @@ class EventUrlTests(TestCase):
     @override_settings(FESTRO_SITE_BASE="https://staging.festro.com")
     def test_event_url_follows_the_configured_base(self):
         self.assertTrue(event_url("abc").startswith("https://staging.festro.com/events/"))
+
+
+class PublicFieldsUrlTests(TestCase):
+    """The helper is not the only way to get this wrong.
+
+    Review caught the residual gap: the tests above pin ``event_url``, so a
+    regression that BYPASSES it — someone re-inlining an f-string in
+    ``_public_fields`` — would slip straight through. This asserts the URL that
+    actually reaches a pick.
+    """
+
+    @override_settings(FESTRO_SITE_BASE="https://festro.com")
+    def test_public_fields_carries_the_events_path(self):
+        from festro.client import _public_fields
+
+        out = _public_fields({"short_id": "be2d3xnj", "title": "PRESIDENT"})
+        self.assertEqual(out["url"], "https://festro.com/events/be2d3xnj")
