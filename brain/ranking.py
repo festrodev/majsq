@@ -159,19 +159,32 @@ def choose(
 
     picked: list[dict] = []
     used_venues: set[str] = set()
+    used_titles: set[str] = set()
+
+    def title_key(event: dict) -> str:
+        return " ".join((event.get("title") or "").lower().split())
+
     for event in scored:
         venue = (event.get("venue_name") or "").strip().lower()
         if venue and venue in used_venues:
             continue
+        if title_key(event) in used_titles:
+            continue
         picked.append(event)
         used_venues.add(venue)
+        used_titles.add(title_key(event))
         if len(picked) == count:
             break
-    for event in scored:  # relax the venue rule only if we came up short
+    # Relax the venue rule only if we came up short. The title rule is never
+    # relaxed: a recurring series shown twice ("Alice in Wonderland" on Friday
+    # and again on Saturday) reads as a broken recommender, not as two options.
+    for event in scored:
         if len(picked) >= count:
             break
-        if event not in picked:
-            picked.append(event)
+        if event in picked or title_key(event) in used_titles:
+            continue
+        picked.append(event)
+        used_titles.add(title_key(event))
 
     for event in picked:
         event["why"] = reasons(event, tastes, locale=locale, private=private)

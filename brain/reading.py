@@ -42,7 +42,7 @@ _AREAS = {
     "quartier latin": "Quartier latin",
 }
 
-_FREE = re.compile(r"\b(gratuit|gratuite|free|no cover|sans frais)\b", re.I)
+_FREE = re.compile(r"\b(gratuits?|gratuites?|free|no cover|sans frais)\b", re.I)
 _BUDGET = re.compile(r"(?:moins de|under|max|budget|sous)\s*\$?\s*(\d{1,3})\s*\$?", re.I)
 _BUDGET_ALT = re.compile(r"\$\s?(\d{1,3})\b")
 _PARTY_SIZE = re.compile(r"\b(?:on est|nous sommes|we are|we're|there(?:'s| are))\s+(\d{1,2})\b", re.I)
@@ -144,6 +144,11 @@ def extract(messages: list[str]) -> Constraints:
 
         found = found.merge(current)
 
+    # "gratuit" is an answer to "what kind?", not just a budget: someone who
+    # asks for free ideas has chosen the Free chip and must not be asked again.
+    if found.free_only and not found.category:
+        found.category = "free"
+
     # A stated category is also a stated taste — it feeds ranking for people
     # who have no Festro history.
     category = categories.get(found.category)
@@ -174,29 +179,42 @@ MAX_OPTIONAL_QUESTIONS = 1
 BROAD_CANDIDATE_THRESHOLD = 25
 
 
-def missing(constraints: Constraints, *, candidate_count: int | None = None) -> list[str]:
-    """Which questions are still worth asking, most important first.
+def required(constraints: Constraints) -> list[str]:
+    """Questions that must be answered before a search is even possible.
 
-    Returns constraint names, not sentences — the surfaces render them as
-    chips (``ask_user`` in the agent loop, an inline keyboard in Telegram).
+    Only two. Without a window there is no valid catalog query at all, and
+    without a category "surprise me" is a choice the user should make rather
+    than one made for them.
     """
     questions: list[str] = []
     if not constraints.time_slot:
         questions.append("time_slot")
     if not constraints.category:
         questions.append("category")
+    return questions
 
-    if questions:
-        return questions
 
-    optional: list[str] = []
-    too_broad = candidate_count is None or candidate_count > BROAD_CANDIDATE_THRESHOLD
-    if too_broad:
-        if not constraints.area:
-            optional.append("area")
-        elif not (constraints.budget_max or constraints.free_only):
-            optional.append("budget")
-    return optional[:MAX_OPTIONAL_QUESTIONS]
+def optional(constraints: Constraints, *, candidate_count: int) -> list[str]:
+    """Narrowing questions worth asking once we know how wide the field is.
+
+    Kept separate from :func:`required` on purpose. When both lived in one
+    function, calling it without a candidate count made an optional question
+    look required, and the agent asked "un coin en particulier ?" *before*
+    searching — a question it had no reason to ask and could not yet justify.
+    The signature now makes that mistake impossible: you cannot ask for
+    optional questions without saying how many candidates you have.
+    """
+    if required(constraints):
+        return []
+    if candidate_count <= BROAD_CANDIDATE_THRESHOLD:
+        return []
+
+    narrowing: list[str] = []
+    if not constraints.area:
+        narrowing.append("area")
+    elif not (constraints.budget_max or constraints.free_only):
+        narrowing.append("budget")
+    return narrowing[:MAX_OPTIONAL_QUESTIONS]
 
 
 def question_chips(name: str, *, locale: str = "fr") -> dict:

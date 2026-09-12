@@ -183,7 +183,7 @@ def respond(
     # Ask for the window and the category before searching — without a window
     # there is no valid query at all, and without a category "surprise me" is
     # a choice the user should make rather than one made for them.
-    still_missing = reading.missing(constraints)
+    still_missing = reading.required(constraints)
     if still_missing:
         question = reading.question_chips(still_missing[0], locale=locale)
         return Reply(
@@ -200,9 +200,9 @@ def respond(
     )
 
     # One optional narrowing question, only when the field is still wide.
-    optional = reading.missing(constraints, candidate_count=len(found))
-    if optional and len(found) > reading.BROAD_CANDIDATE_THRESHOLD:
-        question = reading.question_chips(optional[0], locale=locale)
+    narrowing = reading.optional(constraints, candidate_count=len(found))
+    if narrowing:
+        question = reading.question_chips(narrowing[0], locale=locale)
         return Reply(
             text=question["question"],
             question=question,
@@ -225,14 +225,32 @@ def respond(
         found, tastes, locale=locale, private=not conversation.is_group
     )
 
+    # A chip with nothing behind it must never dead-end the conversation. The
+    # catalog almost always has *something* in the window, so widen to the
+    # ranked feed and say plainly that this is not what was asked for — a
+    # worse-matching pick the user can refuse beats "rien trouvé" while three
+    # thousand events sit there.
+    widened = False
+    if not picks and constraints.category not in (None, "", "surprise"):
+        fallback = search.candidates(
+            time_slot=constraints.time_slot,
+            band=constraints.band,
+            category="surprise",
+            free_only=constraints.free_only,
+        )
+        picks = ranking.choose(
+            fallback, tastes, locale=locale, private=not conversation.is_group
+        )
+        widened = bool(picks)
+
     if not picks:
-        category = categories.get(constraints.category)
-        label = category.label(locale) if category else ""
+        slot = slots.get(constraints.time_slot)
+        when = slot.label(locale).lower() if slot else ""
         return Reply(
             text=(
-                f"Rien trouvé en {label.lower()} pour ce moment-là. On essaie un autre soir ?"
+                f"Je ne trouve rien {when}. On essaie un autre moment ?"
                 if french
-                else f"Nothing in {label.lower()} for that window. Try another night?"
+                else f"I can't find anything {when}. Try another time?"
             ),
             state=constraints.as_dict(),
         )
@@ -251,7 +269,7 @@ def respond(
         conversation.save(update_fields=["connect_nudged_at"])
 
     reply = Reply(
-        text=_headline(constraints, len(public), locale=locale),
+        text=_headline(constraints, len(public), locale=locale, widened=widened),
         picks=public,
         share_id=pick_set.share_id,
         map_url=f"{settings.MAJSQ_WEB_URL}/m/{pick_set.share_id}",
@@ -269,12 +287,21 @@ def respond(
     return reply
 
 
-def _headline(constraints, count: int, *, locale: str = "fr") -> str:
+def _headline(constraints, count: int, *, locale: str = "fr", widened: bool = False) -> str:
     french = str(locale).startswith("fr")
     category = categories.get(constraints.category)
     slot = slots.get(constraints.time_slot)
     what = category.blurb if category else ("des idées" if french else "some ideas")
     when = slot.label(locale).lower() if slot else ("ce soir" if french else "tonight")
+
+    if widened:
+        # Say what happened. Quietly serving something else would make the
+        # agent look like it ignored the question.
+        label = category.label(locale).lower() if category else ""
+        if french:
+            return f"Rien en {label} {when}, mais il y a ça :"
+        return f"Nothing in {label} {when}, but here's what's on:"
+
     if french:
         return f"{count} idées pour {what} {when} :"
     return f"{count} picks for {when}:"
