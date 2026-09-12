@@ -52,7 +52,9 @@ def _shifted(event: dict, offset_days: int) -> dict:
 
 def _public(event: dict) -> dict:
     out = dict(event)
-    out["url"] = f"{settings.FESTRO_SITE_BASE}/e/{event.get('short_id', '')}"
+    from festro.client import event_url
+
+    out["url"] = event_url(event.get("short_id", ""))
     return out
 
 
