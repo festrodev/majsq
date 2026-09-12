@@ -47,58 +47,59 @@ aggregate: "2 sur 3 aiment le jazz", never "Sam booked X last month".
 
 ---
 
-## Repo layout
+## The three repos
+
+| Repo | What it is | Owner |
+|---|---|---|
+| **`majsq`** (this one) | The agent. Django: the brain, the conversation store, the only Festro caller, the HTTP contract, the AG-UI stream. | Agent |
+| [`majsqweb`](https://github.com/festrodev/majsqweb) | The web surface. Next.js 16 + CopilotKit. Welcome, chat, the map share page. | Web |
+| [`majsqbot`](https://github.com/festrodev/majsqbot) | The Telegram surface. FastAPI webhook + python-telegram-bot. | Bot |
+
+The agent owns every decision about *what* to recommend. The two surfaces own
+*how* it is shown, and talk to the agent only through
+[`docs/CONTRACT.md`](docs/CONTRACT.md). Neither surface holds a model key or
+calls Festro.
+
+**In this repo**
 
 | Path | What it is |
 |---|---|
-| `agent/` | Django. The brain, the conversation store, and both transports: an AG-UI SSE endpoint for the web and a Telegram webhook. |
-| `web/` | Next.js 16 + CopilotKit. Welcome, chat, and the map share page. |
-| `fixtures/` | 60 real Montréal events and the tag taxonomy, captured 2026-09-12. Used when `FESTRO_MOCK=1`. |
-| `docs/` | Design notes. |
-
-Three logical apps, **two deployed services** — the Telegram bot is a package
-inside the agent, not a third thing to keep alive.
+| `brain/` | Reading the chat, categories, time slots, search, ranking, the turn engine. |
+| `festro/` | The catalog client and the offline mock. |
+| `api/` | The HTTP contract the surfaces call. |
+| `agui/` | The AG-UI stream for CopilotKit (returns 501 until it lands). |
+| `core/` | Models: conversations, participants, per-group consent, links, pick sets. |
+| `fixtures/` | 110 real Montréal events and the tag taxonomy, captured 2026-09-12, image fields removed. Used when `FESTRO_MOCK=1`. |
+| `docs/` | Design system, contract, team rules, session prompts. |
 
 ---
 
 ## Run it
 
-You need Python 3.12+ and Node 20+. **No API keys are required** for a first
-run: `FESTRO_MOCK=1` serves the bundled catalog and the agent falls back to a
-deterministic composer when there is no model key.
+Python 3.12+. **No API keys are required** for a first run: `FESTRO_MOCK=1`
+serves the bundled catalog and the agent falls back to deterministic phrasing
+when there is no model key.
 
 ```bash
 git clone https://github.com/festrodev/majsq.git
 cd majsq
 cp .env.example .env        # works as-is for the offline demo
-```
-
-**The agent:**
-
-```bash
-cd agent
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-FESTRO_MOCK=1 python manage.py migrate
-FESTRO_MOCK=1 python manage.py runserver
+FESTRO_MOCK=1 MAJSQ_OPEN_AGUI=1 python manage.py migrate
+FESTRO_MOCK=1 MAJSQ_OPEN_AGUI=1 python manage.py runserver
 ```
 
-**The web app**, in a second terminal:
+Then, in a second terminal, one full conversation from the command line:
 
 ```bash
-cd web
-npm install
-npm run dev            # http://localhost:3000
+curl -s localhost:8000/api/turn/ -H 'Content-Type: application/json' -d '{"channel":"telegram","kind":"group","conversation_id":"-1","participant_id":"1","display_name":"Ali","locale":"fr","text":"quoi faire ce soir?"}'
+curl -s localhost:8000/api/turn/ -H 'Content-Type: application/json' -d '{"channel":"telegram","kind":"group","conversation_id":"-1","participant_id":"1","locale":"fr","text":"","chosen":{"category":"theatre"}}'
 ```
 
-**Telegram**, optional: create a bot with [@BotFather](https://t.me/botfather),
-turn **privacy mode off** so it can read group messages, put the token in
-`.env`, then point Telegram at your webhook (use a tunnel in development):
-
-```bash
-curl -F "url=https://<your-tunnel>/tg/webhook/" -F "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
-  "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook"
-```
+The first answers with category chips; the second with three picks, a poll,
+and a map share link. The web and Telegram surfaces are separate repos — see
+the table above.
 
 ---
 
@@ -141,7 +142,7 @@ Two decisions are worth reading before you change anything:
 - **Categories are not tags.** Only ~13% of live events carry a tag, and the
   taxonomy is almost entirely music genre. A category is a *definition* —
   tags plus keyword queries plus venues — merged across several catalog calls.
-  See [`agent/brain/categories.py`](agent/brain/categories.py).
+  See [`brain/categories.py`](brain/categories.py).
 - **A connected account is not an access token.** maj$q never holds a Festro
   user token. It holds an opaque credential that is accepted by exactly one
   endpoint and carries no account authority. See [`docs/connect.md`](docs/connect.md).
