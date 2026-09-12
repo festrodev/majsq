@@ -165,9 +165,20 @@ _PUBLIC_FIELDS = (
 )
 
 
+def event_url(short_id: str) -> str:
+    """The public festro.com page for an event.
+
+    ``/events/<short_id>`` — verified against the live site. This was ``/e/``
+    for its whole first day, which 404s: every link the bot sent was dead, and
+    nothing caught it because the agent never fetches the URL it builds. The
+    path lives here alone so the mock and the live client cannot disagree.
+    """
+    return f"{settings.FESTRO_SITE_BASE}/events/{short_id}"
+
+
 def _public_fields(event: dict) -> dict:
     out = {key: event.get(key) for key in _PUBLIC_FIELDS if key in event}
-    out["url"] = f"{settings.FESTRO_SITE_BASE}/e/{event.get('short_id', '')}"
+    out["url"] = event_url(event.get("short_id", ""))
     return out
 
 
