@@ -193,10 +193,24 @@ only. The web's `/m/[share_id]` page calls this directly.
 
 ## `POST /agui/` — AG-UI stream for CopilotKit
 
-Status: **implemented.** The web can register this URL as a remote AG-UI agent
-and consume the same conversation engine and state shape as `/api/turn/`.
+Status: **implemented.** The web registers this URL as a remote AG-UI agent
+and gets the same conversation engine and state shape as `/api/turn/`.
 
-When it lands it will accept AG-UI `RunAgentInput` and stream SSE events
+### What the agent reads out of `RunAgentInput`
+
+This is the input half of the contract, and it is one-sided by nature — the
+web is the only caller — which is exactly why it belongs here. A chip tap that
+silently does nothing over AG-UI is a failure nobody notices until a demo.
+
+| Agent uses | From | Notes |
+|---|---|---|
+| `conversation_id` and `participant_id` | `thread_id` | The web sets it to the `majsq_session` cookie value. Both fields, same value: on the web the conversation and the person are the same session. |
+| `text` | the last `user` message in `messages` | |
+| `chosen` | `state.chosen` | A tapped chip, same shape as `/api/turn/`'s `chosen`. Send `{"category": "theatre"}`, not a synthetic user message. |
+| `channel` / `kind` | fixed `web` / `web` | Not read from the request. |
+| `locale` | fixed `fr` today | The web cannot yet select a locale over AG-UI; use `/api/turn/` if you need `en`. |
+
+It accepts AG-UI `RunAgentInput` and streams SSE events
 (`RUN_STARTED`, `TEXT_MESSAGE_*`, `TOOL_CALL_*`, `STATE_SNAPSHOT`,
 `RUN_FINISHED`). The shared state snapshot will be:
 
