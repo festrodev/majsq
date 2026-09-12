@@ -1,0 +1,245 @@
+{
+ "note": "Festro tag taxonomy, fetched 2026-09-12.",
+ "results": [
+  {
+   "slug": "classical",
+   "label": "Classical",
+   "category": "genre",
+   "usage_count": 143
+  },
+  {
+   "slug": "rock",
+   "label": "Rock",
+   "category": "genre",
+   "usage_count": 109
+  },
+  {
+   "slug": "electronic",
+   "label": "Electronic",
+   "category": "genre",
+   "usage_count": 87
+  },
+  {
+   "slug": "pop",
+   "label": "Pop",
+   "category": "genre",
+   "usage_count": 51
+  },
+  {
+   "slug": "hip-hop",
+   "label": "Hip Hop",
+   "category": "genre",
+   "usage_count": 26
+  },
+  {
+   "slug": "world",
+   "label": "World",
+   "category": "genre",
+   "usage_count": 22
+  },
+  {
+   "slug": "country",
+   "label": "Country",
+   "category": "genre",
+   "usage_count": 11
+  },
+  {
+   "slug": "metal",
+   "label": "Metal",
+   "category": "genre",
+   "usage_count": 11
+  },
+  {
+   "slug": "rnb",
+   "label": "RnB",
+   "category": "genre",
+   "usage_count": 10
+  },
+  {
+   "slug": "folk",
+   "label": "Folk",
+   "category": "genre",
+   "usage_count": 8
+  },
+  {
+   "slug": "latin",
+   "label": "Latin",
+   "category": "genre",
+   "usage_count": 6
+  },
+  {
+   "slug": "jazz",
+   "label": "Jazz",
+   "category": "genre",
+   "usage_count": 3
+  },
+  {
+   "slug": "reggae",
+   "label": "Reggae",
+   "category": "genre",
+   "usage_count": 2
+  },
+  {
+   "slug": "festival",
+   "label": "Festival",
+   "category": "event_type",
+   "usage_count": 1
+  },
+  {
+   "slug": "house",
+   "label": "House",
+   "category": "genre",
+   "usage_count": 1
+  },
+  {
+   "slug": "techno",
+   "label": "Techno",
+   "category": "genre",
+   "usage_count": 1
+  },
+  {
+   "slug": "afro-house",
+   "label": "Afro House",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "afterparty",
+   "label": "Afterparty",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "amapiano",
+   "label": "Amapiano",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "boat-party",
+   "label": "Boat Party",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "brunch",
+   "label": "Brunch",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "chill",
+   "label": "Chill",
+   "category": "vibe",
+   "usage_count": 0
+  },
+  {
+   "slug": "club-night",
+   "label": "Club Night",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "concert",
+   "label": "Concert",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "dancehall",
+   "label": "Dancehall",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "day-party",
+   "label": "Day Party",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "deep-house",
+   "label": "Deep House",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "disco",
+   "label": "Disco",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "drum-and-bass",
+   "label": "Drum and Bass",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "dubstep",
+   "label": "Dubstep",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "funk",
+   "label": "Funk",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "garage",
+   "label": "Garage",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "high-energy",
+   "label": "High Energy",
+   "category": "vibe",
+   "usage_count": 0
+  },
+  {
+   "slug": "immersive",
+   "label": "Immersive",
+   "category": "vibe",
+   "usage_count": 0
+  },
+  {
+   "slug": "intimate",
+   "label": "Intimate",
+   "category": "vibe",
+   "usage_count": 0
+  },
+  {
+   "slug": "lgbtq-friendly",
+   "label": "LGBTQ Friendly",
+   "category": "vibe",
+   "usage_count": 0
+  },
+  {
+   "slug": "listening-party",
+   "label": "Listening Party",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "live-show",
+   "label": "Live Show",
+   "category": "event_type",
+   "usage_count": 0
+  },
+  {
+   "slug": "melodic-techno",
+   "label": "Melodic Techno",
+   "category": "genre",
+   "usage_count": 0
+  },
+  {
+   "slug": "open-air",
+   "label": "Open Air",
+   "category": "event_type",
+   "usage_count": 0
+  }
+ ]
+}

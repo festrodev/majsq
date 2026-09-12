@@ -1,0 +1,16 @@
+[project]
+name = "majsq-agent"
+version = "0.1.0"
+description = "maj$q — the group-chat agent for Festro. Django brain, AG-UI + Telegram transports."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "majsq_agent.settings"
+python_files = ["test_*.py"]

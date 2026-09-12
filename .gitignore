@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+db.sqlite3
+db.sqlite3-journal
+
+# Node
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Secrets — never commit. See .env.example.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# Local
+.DS_Store
+/agent/staticfiles/
+/agent/media/
+*.log
