@@ -84,4 +84,4 @@ jobs:
           echo "$URL" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Set this as \`MAJSQ_AGENT_URL\` in majsqweb and majsqbot." >> "$GITHUB_STEP_SUMMARY"
-          curl -sf "$URL/healthz" && echo "health check passed"
+          curl -sf "$URL/healthz/" && echo "health check passed"
