@@ -14,13 +14,16 @@ from __future__ import annotations
 import logging
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api.auth import require_service
 from brain import categories as categories_module
 from brain import engine, search, slots
-from core.models import Conversation, Membership, Participant, PickSet, Turn
+from core.models import Conversation, FestroLink, Membership, Participant, PickSet, Turn
+from festro.client import FestroError, exchange_connect_code
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +157,51 @@ def consent(request):
     enabled = bool(payload.get("use_my_taste"))
     membership.set_taste_consent(enabled=enabled)
     return Response({"use_my_taste": membership.use_my_taste})
+
+
+@api_view(["POST"])
+def link(request):
+    """Finish a Festro connect handoff for a transport-verified participant."""
+    require_service(request)
+    payload = request.data or {}
+    required_fields = (
+        "conversation_id",
+        "participant_id",
+        "code",
+        "code_verifier",
+        "redirect_uri",
+    )
+    for required in required_fields:
+        if not payload.get(required):
+            return Response({"detail": f"{required} is required"}, status=400)
+
+    _, participant, _ = _resolve(payload)
+    try:
+        result = exchange_connect_code(
+            code=str(payload["code"]),
+            code_verifier=str(payload["code_verifier"]),
+            redirect_uri=str(payload["redirect_uri"]),
+        )
+    except FestroError as exc:
+        logger.info("festro: connect exchange unavailable (%s)", exc)
+        return Response({"detail": "Festro connection failed."}, status=502)
+
+    expires_at = None
+    if result.get("expires_at"):
+        expires_at = parse_datetime(str(result["expires_at"]))
+
+    display_name = str(result.get("display_name") or "")[:120]
+    FestroLink.objects.update_or_create(
+        participant=participant,
+        defaults={
+            "credential": str(result["credential"]),
+            "festro_display_name": display_name,
+            "connected_at": timezone.now(),
+            "expires_at": expires_at,
+            "revoked_at": None,
+        },
+    )
+    return Response({"connected": True, "display_name": display_name})
 
 
 @api_view(["GET"])
