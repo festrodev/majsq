@@ -75,14 +75,27 @@ the aggregate reasons, never member names.
 Prints the live count behind every chip for a window (uses
 `brain.search.category_counts`). This is how Ali tunes `categories.py`.
 
-### 4. Tests
+### 4. `POST /api/link/` — finish the Festro connect handoff
+
+The Festro side is built and merged-pending (festro#574) and the shape is in
+`CONTRACT.md §Connecting a member's Festro account`. Implement the agent half:
+take `{code, code_verifier, redirect_uri}` plus the caller's transport identity,
+exchange the code at `POST https://api.festro.com/api/v1/connect/token/` using
+maj$q's own `FESTRO_CLIENT_ID`/`FESTRO_CLIENT_SECRET`, and store the returned
+credential on `FestroLink` for that participant.
+
+Two things the exchange will punish you for: the code lives **5 minutes**, and
+the `redirect_uri` must match the one the authorize step used **exactly**.
+Ask Ali for the client credentials — never commit them.
+
+### 5. Tests
 
 `pytest` with `pytest-django` (pin them). Cover: `reading.extract` on the six
 sentences in `brain/reading.py`'s own docstrings, `required()`/`optional()`,
 `ranking.choose` never repeating a title, the consent-off-excludes-on-next-turn
 rule, the share payload containing no `score`, and `403` without the secret.
 
-### 5. `Dockerfile` + `gunicorn`
+### 6. `Dockerfile` + `gunicorn`
 
 `python:3.12-slim`, `gunicorn majsq_agent.wsgi --bind 0.0.0.0:$PORT`,
 `collectstatic` not needed. Build locally and run it with `FESTRO_MOCK=1`.
