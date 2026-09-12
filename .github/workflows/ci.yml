@@ -66,8 +66,15 @@ jobs:
           fi
 
       - name: Smoke — a real conversation end to end
-        # The suite can pass while the app is broken at the seams, so drive the
-        # actual HTTP contract once: ask a question, tap a chip, get picks.
+        # A green suite can still mean an app broken at the seams, so drive the
+        # real HTTP contract once.
+        #
+        # It follows the conversation rather than assuming a fixed number of
+        # turns: with a wide category the agent asks one narrowing question
+        # before answering, which is by design. The guarantee worth asserting
+        # is that the conversation TERMINATES IN PICKS, not that it takes
+        # exactly two turns — the first version of this test hard-coded two and
+        # failed on the agent behaving correctly.
         run: |
           python manage.py migrate --noinput
           python manage.py runserver 8000 --noreload &
@@ -75,25 +82,59 @@ jobs:
             curl -sf localhost:8000/healthz > /dev/null && break
             sleep 1
           done
-          curl -sf localhost:8000/healthz
+          curl -sf localhost:8000/healthz > /dev/null
 
-          ask=$(curl -sf localhost:8000/api/turn/ \
-            -H 'Content-Type: application/json' \
-            -d '{"channel":"web","kind":"web","conversation_id":"ci","participant_id":"ci","locale":"fr","text":"quoi faire ce week-end?"}')
-          echo "$ask" | python -c "import json,sys; d=json.load(sys.stdin); assert d['question']['name']=='category', d; print('  question ok')"
+          python - <<'PY'
+          import json
+          import urllib.request
 
-          picks=$(curl -sf localhost:8000/api/turn/ \
-            -H 'Content-Type: application/json' \
-            -d '{"channel":"web","kind":"web","conversation_id":"ci","participant_id":"ci","locale":"fr","text":"","chosen":{"category":"theatre"}}')
-          echo "$picks" | python -c "
-          import json,sys
-          d = json.load(sys.stdin)
-          assert d['picks'], 'no picks returned'
-          assert d['share_id'], 'no share id'
-          for p in d['picks']:
-              assert 'cover_image' not in p and 'card_image' not in p, 'artwork leaked into a pick'
-          print(f\"  {len(d['picks'])} picks ok, no artwork\")
-          "
+          BASE = "http://localhost:8000/api/turn/"
+
+          def turn(**body):
+              payload = {
+                  "channel": "web", "kind": "web",
+                  "conversation_id": "ci", "participant_id": "ci",
+                  "locale": "fr",
+                  **body,
+              }
+              request = urllib.request.Request(
+                  BASE, data=json.dumps(payload).encode(),
+                  headers={"Content-Type": "application/json"},
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          reply = turn(text="quoi faire ce week-end?")
+          asked = []
+
+          # Answer whatever it asks, at most four times, then insist on picks.
+          for _ in range(4):
+              question = reply.get("question")
+              if not question:
+                  break
+              assert question["options"], f"question with no options: {question}"
+              asked.append(question["name"])
+              # Take the first real option; "" means "no preference".
+              choice = next(
+                  (o["value"] for o in question["options"] if o["value"]),
+                  question["options"][0]["value"],
+              )
+              reply = turn(text="", chosen={question["name"]: choice})
+
+          assert not reply.get("question"), f"still asking after 4 answers: {asked}"
+          picks = reply.get("picks")
+          assert picks, f"conversation ended with no picks (asked: {asked})"
+          assert reply.get("share_id"), "picks without a map share id"
+
+          for pick in picks:
+              assert pick.get("title"), f"pick with no title: {pick}"
+              # The rule that must never regress: artwork is licensed to Festro
+              # for its own pages and must not travel into a chat or a share.
+              leaked = [k for k in pick if "image" in k or "photo" in k]
+              assert not leaked, f"artwork field leaked into a pick: {leaked}"
+
+          print(f"  asked {asked or ['nothing']}, returned {len(picks)} picks, no artwork")
+          PY
 
   docker:
     # Proves the image the deploy workflow will build actually builds.
