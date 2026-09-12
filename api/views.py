@@ -184,17 +184,19 @@ def link(request):
         )
     except FestroError as exc:
         logger.info("festro: connect exchange unavailable (%s)", exc)
-        return Response({"detail": "Festro connection failed."}, status=502)
+        status_code = exc.status_code if 400 <= exc.status_code < 500 else 502
+        return Response({"code": exc.code, "detail": exc.detail}, status=status_code)
 
     expires_at = None
     if result.get("expires_at"):
         expires_at = parse_datetime(str(result["expires_at"]))
 
-    display_name = str(result.get("display_name") or "")[:120]
+    user = result.get("user") if isinstance(result.get("user"), dict) else {}
+    display_name = str(user.get("display_name") or "")[:120]
     FestroLink.objects.update_or_create(
         participant=participant,
         defaults={
-            "credential": str(result["credential"]),
+            "credential": str(result["connect_token"]),
             "festro_display_name": display_name,
             "connected_at": timezone.now(),
             "expires_at": expires_at,
